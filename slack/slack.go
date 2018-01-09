@@ -57,6 +57,11 @@ func (api *API) SendDataSynchronously(data []string) error {
 	return sendDataSynchronously(api, data)
 }
 
+// SendDataConcurrently sends an array of strings to Slack concurrently
+func (api *API) SendDataConcurrently(data []string) []error {
+	return sendDataConcurrently(api, data)
+}
+
 func sendMessage(uri URI, message string) error {
 	body, err := json.Marshal(jsonMessage{message})
 
@@ -89,11 +94,6 @@ func sendDataSynchronously(sender MessageSender, data []string) error {
 	}
 
 	return nil
-}
-
-// SendDataConcurrently sends an array of strings to Slack concurrently
-func (api *API) SendDataConcurrently(data []string) []error {
-	return sendDataConcurrently(api, data)
 }
 
 func sendDataConcurrently(sender MessageSender, data []string) []error {
