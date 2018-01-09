@@ -1,6 +1,7 @@
 package slack
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -56,15 +57,34 @@ func TestSendsMessageReturnsErrorOn500(t *testing.T) {
 func TestSendsAllMessagesSynchronously(t *testing.T) {
 	mockedMessages := make([]string, 0)
 	sender := mockedSender{nil, mockedMessages}
-	originalMessages := []string{"one", "two", "three"}
 
-	err := sendDataSynchronously(&sender, []string{"one", "two", "three"})
+	messagesToSend := []string{"one", "two", "three"}
+	err := sendDataSynchronously(&sender, messagesToSend)
 
 	if err != nil {
 		t.Error("Expected error to be nil")
 	}
 
-	expectedMessages := fmt.Sprintf("%v", originalMessages)
+	expectedMessages := fmt.Sprintf("%v", messagesToSend)
+	actualMessages := fmt.Sprintf("%v", sender.messages)
+
+	if expectedMessages != actualMessages {
+		t.Errorf("Expected messages should be %s got %s", expectedMessages, actualMessages)
+	}
+}
+
+func TestSendsAllMessagesSynchronouslyWithError(t *testing.T) {
+	mockedMessages := make([]string, 0)
+	sender := mockedSender{errors.New("Just a random error"), mockedMessages}
+
+	messagesToSend := []string{"one", "two", "three"}
+	err := sendDataSynchronously(&sender, messagesToSend)
+
+	if err.Error() != "Just a random error" {
+		t.Error("Expected error not to be nil")
+	}
+
+	expectedMessages := fmt.Sprintf("%v", []string{"one"})
 	actualMessages := fmt.Sprintf("%v", sender.messages)
 
 	if expectedMessages != actualMessages {
