@@ -9,19 +9,14 @@ import (
 
 const slackDefaultBaseURL = "https://hooks.slack.com/services/"
 
-// API is used to post messages to a Slack webhook
-type API struct {
-	baseURL string
-	Endpoint
+// URI interface
+type URI interface {
+	GetURL() string
 }
 
-// Endpoint is used to store the RequestURI
-type Endpoint struct {
-	URL string
-}
-
-type jsonMessage struct {
-	Data string `json:"text,omitempty"`
+// MessageSender interface
+type MessageSender interface {
+	SendMessage(message string) error
 }
 
 type asyncResult struct {
@@ -29,26 +24,54 @@ type asyncResult struct {
 	err     error
 }
 
-// SendMessage sends a single message to a Slack service via HTTP
-func (slack *API) SendMessage(message string) error {
-	if slack.baseURL == "" {
-		slack.baseURL = slackDefaultBaseURL
-	}
+type jsonMessage struct {
+	Data string `json:"text,omitempty"`
+}
 
+// API is used to post messages to a Slack webhook
+type API struct {
+	baseURL  string
+	endpoint string
+}
+
+// NewAPI returns an instance of API prefilled with the Slack webhook base URL
+func NewAPI(endpoint string) *API {
+	return &API{
+		slackDefaultBaseURL,
+		endpoint,
+	}
+}
+
+// GetURL returns the full API URL
+func (api *API) GetURL() string {
+	return api.baseURL + api.endpoint
+}
+
+// SendMessage sends a single message to a Slack service via HTTP
+func (api *API) SendMessage(message string) error {
+	return sendMessage(api, message)
+}
+
+// SendDataSynchronously sends an array of strings to Slack synchronously
+func (api *API) SendDataSynchronously(data []string) error {
+	return sendDataSynchronously(api, data)
+}
+
+func sendMessage(uri URI, message string) error {
 	body, err := json.Marshal(jsonMessage{message})
 
 	if err != nil {
 		return fmt.Errorf("marshalling failed with %s: %v", message, err)
 	}
 
-	resp, err := http.Post(slack.baseURL+slack.URL, "application/json", bytes.NewReader(body))
+	resp, err := http.Post(uri.GetURL(), "application/json", bytes.NewReader(body))
 
 	if err != nil {
-		return fmt.Errorf("request failed: %v", err)
+		return fmt.Errorf("%s request failed: %v", uri.GetURL(), err)
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Slack API did not respond with a 200 OK")
+		return fmt.Errorf("%s did not respond with a 200 OK", uri.GetURL())
 	}
 
 	defer resp.Body.Close()
@@ -56,10 +79,9 @@ func (slack *API) SendMessage(message string) error {
 	return nil
 }
 
-// SendDataSynchronously sends an array of strings to Slack synchronously
-func (slack *API) SendDataSynchronously(data []string) error {
+func sendDataSynchronously(sender MessageSender, data []string) error {
 	for _, text := range data {
-		err := slack.SendMessage(text)
+		err := sender.SendMessage(text)
 
 		if err != nil {
 			return err
@@ -70,7 +92,11 @@ func (slack *API) SendDataSynchronously(data []string) error {
 }
 
 // SendDataConcurrently sends an array of strings to Slack concurrently
-func (slack *API) SendDataConcurrently(data []string) []error {
+func (api *API) SendDataConcurrently(data []string) []error {
+	return sendDataConcurrently(api, data)
+}
+
+func sendDataConcurrently(sender MessageSender, data []string) []error {
 	errors := make([]error, 0)
 
 	ch := make(chan asyncResult, len(data))
@@ -78,7 +104,7 @@ func (slack *API) SendDataConcurrently(data []string) []error {
 
 	for _, text := range data {
 		go func(text string) {
-			err := slack.SendMessage(text)
+			err := sender.SendMessage(text)
 
 			if err != nil {
 				ch <- asyncResult{false, err}

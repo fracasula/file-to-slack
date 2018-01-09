@@ -26,9 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	slackAPI := slack.API{
-		Endpoint: slack.Endpoint{"/T8NNCR01G/B8NU7G8PM/9qSAhfSTSOvOjlVGdZCi1F2n"},
-	}
+	slackAPI := slack.NewAPI("/T8NNCR01G/B8NU7G8PM/9qSAhfSTSOvOjlVGdZCi1F2n")
 
 	if sync {
 		if err := slackAPI.SendDataSynchronously(data); err != nil {
