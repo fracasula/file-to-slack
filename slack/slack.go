@@ -115,16 +115,16 @@ func sendDataConcurrently(sender MessageSender, data []string) []error {
 	}
 
 	for i := 0; i < len(data); i++ {
-		result, ok := <-ch
+		result := <-ch
 
-		if !result.success && ok {
+		if !result.success {
 			errors = append(errors, result.err)
-		}
-
-		if !ok {
-			break
 		}
 	}
 
-	return errors
+	if len(errors) > 1 {
+		return errors
+	}
+
+	return nil
 }
