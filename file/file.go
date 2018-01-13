@@ -2,6 +2,7 @@ package file
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -10,7 +11,7 @@ func GetLinesFromFilename(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while opening file '%s'", filename)
 	}
 
 	defer file.Close()
@@ -23,7 +24,7 @@ func GetLinesFromFilename(filename string) ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while scanning file '%s': %v", filename, err)
 	}
 
 	return data, nil

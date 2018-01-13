@@ -89,7 +89,7 @@ func sendDataSynchronously(sender MessageSender, data []string) error {
 		err := sender.SendMessage(text)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("sending data synchronously: %v", err)
 		}
 	}
 

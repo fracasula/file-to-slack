@@ -107,8 +107,8 @@ func TestSendsAllMessagesSynchronouslyWithError(t *testing.T) {
 	messagesToSend := []string{"one", "two", "three"}
 	err := sendDataSynchronously(&sender, messagesToSend)
 
-	if err.Error() != "Just a random error" {
-		t.Error("Expected error not to be nil")
+	if err.Error() != "sending data synchronously: Just a random error" {
+		t.Errorf("Expected error not to be nil, got %v", err)
 	}
 
 	expectedMessages := fmt.Sprintf("%v", []string{"one"})
