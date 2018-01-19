@@ -11,10 +11,11 @@ import (
 
 func main() {
 	sync := flag.Bool("sync", false, "to send messages synchronously")
+	filename := flag.String("filename", "./log.txt", "file to read data from")
 
 	flag.Parse()
 
-	data, err := file.GetLinesFromFilename("./log.txt") // @todo make it come from os.Args
+	data, err := file.GetLinesFromFilename(*filename)
 
 	if err != nil {
 		log.Fatal(err)
