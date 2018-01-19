@@ -1,24 +1,18 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
-	"strconv"
 
 	"./file"
 	"./slack"
 )
 
 func main() {
-	sync := false
-	if len(os.Args) >= 2 {
-		var err error
-		sync, err = strconv.ParseBool(os.Args[1])
+	sync := flag.Bool("sync", false, "to send messages synchronously")
 
-		if err != nil {
-			log.Fatal("Could not parse second argument (sync)")
-		}
-	}
+	flag.Parse()
 
 	data, err := file.GetLinesFromFilename("./log.txt") // @todo make it come from os.Args
 
@@ -28,7 +22,7 @@ func main() {
 
 	slackAPI := slack.NewAPI("/T8NNCR01G/B8NU7G8PM/9qSAhfSTSOvOjlVGdZCi1F2n")
 
-	if sync {
+	if *sync {
 		if err := slackAPI.SendDataSynchronously(data); err != nil {
 			log.Fatal(err)
 		}
